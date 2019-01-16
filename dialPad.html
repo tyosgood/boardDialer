@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+  <meta charset="UTF-8">
+  <title>Working Dial Pad</title>
+  
+  
+  
+      <link rel="stylesheet" href="css/style.css">
+
+  
+</head>
+
+<body>
+
+  <link href="https://fonts.googleapis.com/css?family=Exo" rel="stylesheet">
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+<div class="container">
+  <div id="dialer">
+    <div id="dialpad">
+      <div id="output"></div>
+      <div class="row">
+        <div class="digit" id="one">1</div>
+        <div class="digit" id="two">2
+          <div class="sub">ABC</div>
+        </div>
+        <div class="digit" id="three">3
+          <div class="sub">DEF</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="digit" id="four">4
+          <div class="sub">GHI</div>
+        </div>
+        <div class="digit" id="five">5
+          <div class="sub">JKL</div>
+        </div>
+        <div class="digit">6
+          <div class="sub">MNO</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="digit">7
+          <div class="sub">PQRS</div>
+        </div>
+        <div class="digit">8
+          <div class="sub">TUV</div>
+        </div>
+        <div class="digit">9
+          <div class="sub">WXYZ</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="digit">*
+        </div>
+        <div class="digit">0
+        </div>
+        <div class="digit">#
+        </div>
+      </div>
+    </div>
+  <div class="botrow"><i class="fa fa-star-o dig" aria-hidden="true"></i>
+    <div id="call"><i class="fa fa-phone" aria-hidden="true"></i></div>
+    
+    <i class="fa fa-long-arrow-left dig" aria-hidden="true"></i>
+  </div>
+</div>
+
+  <div class="dialing">
+       <div class="dialingNumber"></div>
+  </div>
+
+  <div class="connected">
+    <div class="dialingNumber"></div>
+    <div id="callBottomRow" class="inCallBotrow">
+      <div id="numberPad" class="circle">#</div>
+      <div id="disconnect" class="circle">X</div>
+      <div id="mute" class="circle"><i class="fa fa-microphone-slash" aria-hidden="true"></i></div>
+    </div>
+</div>
+
+<div id="dtmfBottomRow" class="inCallBotrow">
+      <div id="back" class="circle">Back</div>
+</div>
+
+<form id="dial" action="/dial" method="post">
+       <input name="dialString" type="hidden" value=""/>
+        
+  </form>
+  <script src='/socket.io/socket.io.js'> </script>
+  <script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
+  <script src="js/index.js"></script>
+
+
+
+
+
+</body>
+
+</html>
+
