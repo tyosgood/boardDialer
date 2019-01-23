@@ -62,7 +62,10 @@ console.log("outside of xapi feedback");
 		    .on('/Status/Call', (call) => {
 		    	console.log('inside of xapi feedback');
                 console.log(call);
-		    	 io.emit('newCall', call);
+		    	 if (call.ghost || call.Status == "Ringing" || call.Status == "Connected" || call.Status == "Disconnecting" || call.Status =="Dialling"){ 
+                         io.emit('newCall', call);
+                 }  
+
 		        /*switch (call.Status) {
 		            case "Ringing":
 		            	 console.log('Ringing');
@@ -109,6 +112,14 @@ console.log("outside of xapi feedback");
     socket.on('dtmf', function(dtmf){
         console.log('dtmf: ' + dtmf.digit + 'for call: ' + dtmf.callID);
         xapi.command('Call DTMFSend', {CallId: dtmf.callID, DTMFString: dtmf.digit});
+    });
+
+    socket.on('answer', function(call){
+        xapi.command('Call Accept', {CallId: call});
+    });
+
+    socket.on('decline', function(call){
+        xapi.command('Call Reject', {CallId: call});
     });
 });
 

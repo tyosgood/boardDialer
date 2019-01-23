@@ -2,7 +2,37 @@ var count = 0;
 var num
 var dialstring = "";
 var socket = io();
-var callID, callObj;
+var callID, callDisplayName;
+
+var modal = new tingle.modal({
+    footer: true,
+    stickyFooter: false,
+    closeMethods: ['overlay', 'button', 'escape'],
+    closeLabel: "Close",
+    cssClass: ['custom-class-1', 'custom-class-2'],
+    onOpen: function() {
+        console.log('modal open');
+    },
+    onClose: function() {
+        console.log('modal closed');
+    }
+    
+});
+
+
+// add a button
+modal.addFooterBtn('Answer', 'tingle-btn tingle-btn--primary', function() {
+    // here goes some logic
+    socket.emit('answer', callID );
+    modal.close();
+});
+
+// add another button
+modal.addFooterBtn('Decline', 'tingle-btn tingle-btn--danger', function() {
+    // here goes some logic
+    socket.emit('decline', callID );
+    modal.close();
+});
 
 
 function reset(){
@@ -100,42 +130,42 @@ $('#call').on('click', function() {
 
 socket.on('newCall', function(call){
   console.log('New call', call);
+  callID = call.id;
 
 //Catches remote hangups and failed call attempts
  if (call.ghost){
     console.log(`Ghost call: ${call.id}`);
+    if (modal.isOpen()){modal.close();}
     reset();
   }
 
 
   switch (call.Status) {
                 case "Ringing":
-                   
+                    // set content
+                    callDisplayName = call.DisplayName;
+                    modal.setContent('<h1>Incoming Call</h1><p>from ' +call.DisplayName+ ' </p>'  );
+                    modal.open();
                     return;
 
                 case "Connected":
                     console.log(`Connected call: ${call.id} to ${call.DisplayName} `);
-                    callID = call.id;
-                    $('.dialingNumber').text(`Connected to: ${call.DisplayName}`);
+                    $('.dialingNumber').text(`Connected to: ${callDisplayName}`);
                     $('#dialer').hide();
                     $('.dialing').hide();
                     $('.connected').css('display','flex');
                     //$('.inCallBotrow').css('display','flex');
                     $('#callBottomRow').css('display', 'flex');
+                    if (modal.isOpen()){modal.close();}
                     return;
                 
                 case "Disconnecting":
                     console.log(`Disconnecting call: ${call.id}`);
                     reset();
-                    return;
-                    
-
-                case "Idle":
-                    console.log(`Idle call: ${call.id}`);
-                     reset();
-                    return;
+                    return;               
 
                 case "Dialling":
+                    callDisplayName = dialstring;
                     $('#dialer').hide();
                     $('.dialingNumber').text('Dialling: ' + dialstring);
                     $('.dialing').css('display','flex');
@@ -157,3 +187,11 @@ socket.on('muteStatus', function(muteStatus){
   }
   else {$('#mute').css('background-color', '');}
 });
+
+
+
+
+
+
+
+
