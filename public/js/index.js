@@ -1,40 +1,38 @@
 var count = 0;
-var num
+var num;
 var dialstring = "";
 var socket = io();
 var callID, callDisplayName;
 
+//this is the popup for incoming calls
 var modal = new tingle.modal({
     footer: true,
     stickyFooter: false,
-    closeMethods: ['overlay', 'button', 'escape'],
+    closeMethods: ['escape'],
     closeLabel: "Close",
-    cssClass: ['custom-class-1', 'custom-class-2'],
+    cssClass: ['dialog'],
     onOpen: function() {
         console.log('modal open');
     },
     onClose: function() {
         console.log('modal closed');
-    }
-    
+    }  
 });
-
-
-// add a button
+// add answer button
 modal.addFooterBtn('Answer', 'tingle-btn tingle-btn--primary', function() {
-    // here goes some logic
+    //tell codec to answer
     socket.emit('answer', callID );
     modal.close();
 });
-
-// add another button
+// add decline button
 modal.addFooterBtn('Decline', 'tingle-btn tingle-btn--danger', function() {
-    // here goes some logic
+    // tell the codec to decline
     socket.emit('decline', callID );
     modal.close();
 });
 
 
+//function to set dialer back to initial state
 function reset(){
  $('.dialing').hide();
  $('.connected').hide();
@@ -50,7 +48,7 @@ function reset(){
 }
 
 
-
+//logic to handle digit clicks and add them to the number to be dialed
 $(".digit").on('click', function() {
   num = ($(this).clone().children().remove().end().text());
   console.log(num + " pressed");
@@ -79,12 +77,17 @@ $('.fa-long-arrow-left').on('click', function() {
   dialstring = dialstring.slice(0, -1);
 });
 
-
+//disconnect connected call
 $('#disconnect').on('click', function() {
   socket.emit('hangup', callID);
-
 });
 
+//cancel while dialing
+$('#cancel').on('click', function() {
+  socket.emit('hangup', callID);
+});
+
+//display numberpad while in call - to send DTMFs
 $('#numberPad').on('click', function() {
       $('.connected').hide();
       $('#callBottomRow').hide();
@@ -96,50 +99,47 @@ $('#numberPad').on('click', function() {
       $('#dialer').show();
 });
 
+//hide dtmf numberpad
 $('#back').on('click', function() {
       $('.connected').show();
       $('#callBottomRow').show();
       $('#output').show();
       $('.botrow').show();
-      //this adds the dtfm class to the digit class so we can emit the dtmf digits one at a time
+      //this removes the dtfm class from the digit class 
       $('.digit').toggleClass('dtmf');
       $('#dtmfBottomRow').hide();
       $('#dialer').hide();
 });
 
 
+//signal codec to mute when mute clicked
 $('#mute').on('click', function() {
   socket.emit('mute', callID);
-
 });
 
 
 
-//new way using ajax
-
+//dial the call - using ajax - could also do this via socket.io but for now this works (so I'm not messing with it)
 $('#call').on('click', function() {
  console.log(dialstring);
- 
- $.post( "/dial", { dialString: dialstring + "@cisco.com"  })
+  $.post( "/dial", { dialString: dialstring + "@cisco.com"})
   console.log("dialing " + dialstring);
-  //$('.numbertodial').remove();
-  //dialstring ="";
-  //count=0;
-  });
+});
 
 
+//main logic for handling call events
 socket.on('newCall', function(call){
   console.log('New call', call);
   callID = call.id;
 
-//Catches remote hangups and failed call attempts
+ //Catches remote hangups and failed call attempts
  if (call.ghost){
     console.log(`Ghost call: ${call.id}`);
     if (modal.isOpen()){modal.close();}
     reset();
   }
 
-
+  //switch on call status
   switch (call.Status) {
                 case "Ringing":
                     // set content
@@ -154,7 +154,6 @@ socket.on('newCall', function(call){
                     $('#dialer').hide();
                     $('.dialing').hide();
                     $('.connected').css('display','flex');
-                    //$('.inCallBotrow').css('display','flex');
                     $('#callBottomRow').css('display', 'flex');
                     if (modal.isOpen()){modal.close();}
                     return;
@@ -180,6 +179,8 @@ socket.on('newCall', function(call){
 
 });
 
+
+//listen for mute status changes and toggle color of mute button to reflect mute state
 socket.on('muteStatus', function(muteStatus){
   console.log('MuteStatus', muteStatus);
   if (muteStatus == 'On'){

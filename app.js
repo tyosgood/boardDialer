@@ -28,6 +28,59 @@ if (!process.env.JSXAPI_DEVICE_URL || !process.env.JSXAPI_USERNAME) {
 // Empty passwords are supported
 //const password = process.env.JSXAPI_PASSWORD ? process.env.JSXAPI_PASSWORD : "";
 
+function connected(xapi, roomName){
+
+// Listen to call events
+        xapi.feedback
+           .on('/Status/Call', (call) => {
+                    console.log('inside of xapi feedback');
+                    console.log(call);
+
+                    //Filter the call events that get sent to client
+                     if (call.ghost || call.Status == "Ringing" || call.Status == "Connected" || call.Status == "Disconnecting" || call.Status =="Dialling"){ 
+                             io.emit('newCall', call);
+                     }  
+        });
+
+        xapi.feedback
+                .on('/Status/Audio/Microphones/Mute', (mute) => {
+                    io.emit('muteStatus', mute);
+        });        
+    
+    //socket IO connections
+    io.on('connection', function(socket){
+    // Join Room corresponding to the specific system
+        socket.join(roomName);
+
+    
+
+        socket.on('hangup', function(call){
+            console.log('hangup callID: ' + call);
+            xapi.command('Call Disconnect', {CallId: call});
+        });
+
+        socket.on('mute', function(call){
+            console.log('mute callID: ' + call);
+            xapi.command('Audio Microphones ToggleMute');
+        });
+
+        socket.on('dtmf', function(dtmf){
+            console.log('dtmf: ' + dtmf.digit + 'for call: ' + dtmf.callID);
+            xapi.command('Call DTMFSend', {CallId: dtmf.callID, DTMFString: dtmf.digit});
+        });
+
+        socket.on('answer', function(call){
+            xapi.command('Call Accept', {CallId: call});
+        });
+
+        socket.on('decline', function(call){
+            xapi.command('Call Reject', {CallId: call});
+        });
+    });
+}
+
+
+
 // Connect to the device
 console.log("connecting to your device...");
 /*
@@ -36,92 +89,40 @@ const xapi = jsxapi.connect(process.env.JSXAPI_DEVICE_URL, {
    password: password
 });
 */
+var connectIP = "10.116.116.40";
+var IPforRoomName = connectIP.replace(/\./g,'-');
 
-const xapi = jsxapi.connect('ssh://192.168.1.32', {
+const xapi = jsxapi.connect('ssh://'+ connectIP, {
     username: 'tyler',
     password: 'tyler'
 });
-
 xapi.on('error', (err) => {
     console.error(`connexion failed: ${err}, exiting`);
     process.exit(1);
 });
 xapi.on('ready', () => {
-    console.log("connexion successful");
+    console.log("connexion to xapi successful, roomname = "+IPforRoomName);
+    connected(xapi, IPforRoomName);
 });
 
 
-//socket IO connections
-io.on('connection', function(socket){
-  
-console.log("outside of xapi feedback");
-  
-//io.emit('newCall', 'outside of feedback')
-// Listen to call events
-		xapi.feedback
-		    .on('/Status/Call', (call) => {
-		    	console.log('inside of xapi feedback');
-                console.log(call);
-		    	 if (call.ghost || call.Status == "Ringing" || call.Status == "Connected" || call.Status == "Disconnecting" || call.Status =="Dialling"){ 
-                         io.emit('newCall', call);
-                 }  
-
-		        /*switch (call.Status) {
-		            case "Ringing":
-		            	 console.log('Ringing');
-		                 io.emit('ringing',{
-					    	Direction: call.Direction,
-					    	From: call.DisplayName
-					    });
-		                return;
-
-		            case "Connected":
-		                console.log(`Connected call: ${call.id}`);
-		                 
-		                return;
-		            
-		            case "Disconnecting":
-		                console.log(`Disconnecting call: ${call.id}`);
-		                return;
-
-		            case "Idle":
-		                console.log(`Idle call: ${call.id}`);
-		                return;
-
-		            default:
-		                //console.log("DEBUG: ignoring event");
-		                return;
-		        }*/
-		    });
-
-        xapi.feedback
-            .on('/Status/Audio/Microphones/Mute', (mute) => {
-                io.emit('muteStatus', mute);
-            });        
-
-    socket.on('hangup', function(call){
-        console.log('hangup callID: ' + call);
-        xapi.command('Call Disconnect', {CallId: call});
-    });
-
-    socket.on('mute', function(call){
-        console.log('mute callID: ' + call);
-        xapi.command('Audio Microphones ToggleMute');
-    });
-
-    socket.on('dtmf', function(dtmf){
-        console.log('dtmf: ' + dtmf.digit + 'for call: ' + dtmf.callID);
-        xapi.command('Call DTMFSend', {CallId: dtmf.callID, DTMFString: dtmf.digit});
-    });
-
-    socket.on('answer', function(call){
-        xapi.command('Call Accept', {CallId: call});
-    });
-
-    socket.on('decline', function(call){
-        xapi.command('Call Reject', {CallId: call});
-    });
+/*//testing
+const secondXapi = jsxapi.connect('ssh://192.168.1.23', {
+    username: 'tyler',
+    password: 'tyler'
 });
+secondXapi.on('error', (err) => {
+    console.error(`connexion to second xapi failed: ${err}, exiting`);
+    process.exit(1);
+});
+secondXapi.on('ready', () => {
+    console.log("connexion to Second Xapi successful");
+});*/
+
+
+
+
+
 
 
 //Serve pages
@@ -134,27 +135,7 @@ app.post('/dial', function (req, res) {
     xapi.command('Dial', { Number: dialString })
         .then((call) => {
             console.log(`Started call with status: ${call.status}, id: ${call.CallId}`);
-            
-            
-
-           
-
-
-
  
-
-           
-
-            // Stop call after delay
-            /*const delay = 60;
-            setTimeout(() => {
-                console.log('Disconnecting call, and exiting.');
-
-                xapi.command('Call Disconnect', { CallId: call.CallId })
-                    .then(process.exit);
-            }, delay * 1000);
-            console.log(`Call with be disconnected in ${delay} seconds...`);*/
-
         })
         .catch((err) => {
             // Frequent error here is to have several on-going calls

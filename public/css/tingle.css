@@ -82,7 +82,7 @@
   flex-shrink: 0;
   margin-top: auto;
   margin-bottom: auto;
-  width: 60%;
+  width: 360px;
   border-radius: 4px;
   background: #fff;
   opacity: 1;
@@ -170,10 +170,11 @@
   line-height: normal;
   cursor: pointer;
   transition: background-color .4s ease;
+  border-radius: 4px;
 }
 
 .tingle-btn--primary {
-  background-color: #3498db;
+  background-color: #66bb6a;
 }
 
 .tingle-btn--danger {
