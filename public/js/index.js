@@ -118,7 +118,6 @@ $('#mute').on('click', function() {
 });
 
 
-
 //dial the call - using ajax - could also do this via socket.io but for now this works (so I'm not messing with it)
 $('#call').on('click', function() {
  console.log(dialstring);
@@ -142,9 +141,10 @@ socket.on('newCall', function(call){
   //switch on call status
   switch (call.Status) {
                 case "Ringing":
-                    // set content
+                    // set content of pop-up window
                     callDisplayName = call.DisplayName;
                     modal.setContent('<h1>Incoming Call</h1><p>from ' +call.DisplayName+ ' </p>'  );
+                    //open pop-up
                     modal.open();
                     return;
 
@@ -174,9 +174,6 @@ socket.on('newCall', function(call){
                     //console.log("DEBUG: ignoring event");
                     return;
             }
-
- 
-
 });
 
 
